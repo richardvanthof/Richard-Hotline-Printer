@@ -35,7 +35,7 @@
         <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
         <label class="form-check-label" for="flexSwitchCheckDefault">Enable alert sounds</label>
       </div>
-      <button class="btn btn-primary" id="play-audio"onclick="testSpeaker">Test audio</button>
+      <button class="btn btn-primary" id="play-audio">Test audio</button>
     </div>
   </div>
 
@@ -62,14 +62,13 @@
     testAudioBtn.disabled = true;
     testAudioBtn.innerText = 'Playing....'
     const resp = await fetch('/api/play-audio')
-    if(resp.status === 200) {
-      testAudioBtn.disabled = false;
-      testAudioBtn.innerText = 'Test audio'
-    } else {
-      alert(await resp)
-      testAudioBtn.disabled = false;
-      testAudioBtn.innerText = 'Test audio'
+    if(await resp.status != 200) {
+      const error = await resp
+      console.error(`${error}`)
+      alert(error.statusText)
     }
+    testAudioBtn.disabled = false;
+    testAudioBtn.innerText = 'Test audio'
   })
  </script>
 {% endblock %}

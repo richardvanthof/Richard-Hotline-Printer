@@ -2,6 +2,8 @@ import uuid
 import datetime
 import csv
 import requests
+import socket
+import simpleaudio as sa
 
 log_collection = []
 
@@ -26,11 +28,12 @@ def log(message: str, type='info'):
        print(e)
        raise e
 
-async def play_audio():
-    filename = 'alert.wav'
-    wave_obj = sa.WaveObject.from_wave_file(filename)
-    play_obj = wave_obj.play()
-    play_obj.wait_done()  # Wait until sound has finished playing
+def play_audio():
+   filename = 'alert.wav'
+   wave_obj = sa.WaveObject.from_wave_file(filename)
+   play_obj = wave_obj.play()
+   play_obj.wait_done()  # Wait until sound has finished playing
+
 
 
 # Check internet connection
