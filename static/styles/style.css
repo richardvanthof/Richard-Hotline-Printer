@@ -1,0 +1,98 @@
+/* Global elements */
+
+img {
+  width: 100%;
+  height: auto;
+}
+h2 {
+  margin: 0;
+}
+.btn-group {
+  height: 100%;
+}
+.main-nav {
+  background-color: whitesmoke; 
+  padding: .25em 2em !important;
+}
+
+.toolbar {
+  padding-top: 10px;
+  margin-bottom: 3em;
+  display: flex;
+  justify-content: space-between;
+  position: sticky;
+  background: white;
+  top: 0;
+  align-items: center;
+}
+
+.log-header {
+  position: sticky;
+  top: 48px;
+  box-shadow: #e1e1e1 0 1px 0px;
+  border: transparent;
+}
+
+.list-group-item {
+  flex-grow: 1
+}
+
+.list-group-horizontal {
+  justify-content: space-evenly
+}
+
+.nav-link{
+  margin: 0 1em;
+}
+
+#footer {
+  margin: 3em;
+  font-size: .8rem;
+  color: rgb(167, 167, 167)
+}
+
+#footer a {
+  color: rgb(167, 167, 167)
+}
+
+/* Print queue page */
+main {
+    margin: 1em 2em;
+  }
+
+.badge {
+  background-color: rgb(141, 178, 174);
+}
+
+.important { 
+  color: #336699; 
+}
+
+.thumbnail {
+  width: 6vw;
+  height: 5vw;
+  overflow: hidden;
+  display: block;
+  margin-right: .5em;
+  border-radius: 5px;
+  border: 1px solid #dee2e6;
+}
+
+.thumbail-content {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  
+}
+
+/* Logs page */
+.important { 
+  color: #336699; 
+}
+
+.toolbar {
+  position: sticky;
+  background: white;
+  top: 0;
+  align-items: center;
+}

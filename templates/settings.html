@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+<main>
+  <header class="container-sm toolbar">
+    <h2>Settings</h2>
+    <div class="btn-group" role="group" aria-label="Basic example">
+      <button type="button" class="btn btn-outline-primary">Save</button>
+    </div>
+  </header>
+  <div class="container-sm">
+      <div class="mb-3">
+        <label class="form-label">Nickname</label>
+        <input class="form-control" type="text" value="Richard" placeholder="John"/>
+        <div class="form-text">How would you like to be called?</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="text" value="richardvanthof@pm.me" placeholder="John@example.com"/>
+        <div class="form-text">We will send notifications to this address.</div>
+      </div>
+     <div class="mb-3">
+      <label class="form-label">Authentication key</label>
+      <input class="form-control" type="password" value="richardvanthof@pm.me" placeholder="John@example.com"/>
+      <div class="form-text">Random string that identifies you with the central server. Do not share this with anyone.</div>
+     </div>
+      
+      
+    <div>
+      <h4>Alerts</h4>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
+        <label class="form-check-label" for="flexSwitchCheckDefault">Enable alert sounds</label>
+      </div>
+      <button class="btn btn-primary" id="play-audio"onclick="testSpeaker">Test audio</button>
+    </div>
+  </div>
+
+  <div class="container-sm">
+    <div>
+      <h2>Local APIs</h2>
+      <p>This print server has several APIs available on this local network to test individual printer functionalities and to (possibly) extend it's capabilities.</p>
+      <h4> /api/confirm </h4> 
+      <span class="badge">POST</span>
+      <h6>Request</h6>
+      <code>
+        {
+          messageIDs: ['id#1', 'id#2', ...]
+        }
+      </code>
+      <h6>/api/play-audio</h6>
+    </div>
+  </div>
+   
+</main>
+ <script>
+  const testAudioBtn = document.querySelector('#play-audio');
+  testAudioBtn.addEventListener('click', async () => {
+    testAudioBtn.disabled = true;
+    testAudioBtn.innerText = 'Playing....'
+    const resp = await fetch('/api/play-audio')
+    if(resp.status === 200) {
+      testAudioBtn.disabled = false;
+      testAudioBtn.innerText = 'Test audio'
+    } else {
+      alert(await resp)
+      testAudioBtn.disabled = false;
+      testAudioBtn.innerText = 'Test audio'
+    }
+  })
+ </script>
+{% endblock %}
+
+    

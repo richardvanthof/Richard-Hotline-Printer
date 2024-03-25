@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+<main>
+  <header class="toolbar">
+    <h2>Logs</h2>
+    <div class="btn-group" role="group" aria-label="Basic example">
+      <button type="button" onclick="location.reload()" class="btn btn-outline-primary">Refresh</button>
+    </div>
+  </header>
+  <table class="table">
+    <thead class="log-header">
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col">Created</th>
+        <th scope="col">Type</th>
+        <th scope="col">Message</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{log.log_id}}</td>
+        <td>{{log.timestamp}}</td>
+        <td>{{log.type}}</td>
+        <td>{{log.message}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</main>
+
+{% endblock %}
+

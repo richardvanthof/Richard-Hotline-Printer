@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        
+
+        
+    </style>
+{% endblock %}
+{% block content %}
+<main>
+  <header class="toolbar">
+    <h2>Print queue</h2>
+    <div class="btn-group" role="group" aria-label="Basic example">
+      <button type="button" id="print-all-locked" class="btn btn-outline-primary">Print all</button>
+      <button type="button" onclick="location.reload()" class="btn btn-small btn-outline-primary">Refresh</button>
+    </div>
+  </header>
+  <table class="table">
+    <thead class="log-header">
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col">Name</th>
+        <th scope="col">Email</th>
+        <th scope="col">Message</th>
+        <th scope="col">Images</th>
+        <th scope="col">Created</th>
+        <th scope="col">Printed</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      {% for message_dict in queue %}
+      
+        {% for id, message in message_dict.items() %}
+        <tr class="message-row" data-printed="{{message.printed}}" data-message-id="{{id}}"></tr>
+        <td>{{id}}</td>
+        <td>{{message.name}}</td>
+        <td><a href="mailto:{{message.email}}">{{message.email}}</a></td>
+        <td>
+          {% if message.printed%}
+          {{message.message}}
+          {% else %}
+          <span class="badge">Locked</span>
+          {% endif%}
+        </td>
+        <td>
+          {% if message.printed and message.images|length > 0 %}
+
+              {% for img in message.images %}
+              <a class="thumbnail" target="_blank"href="{{img}}"><img class="thumbail-content" src="{{img}}"/></a>
+              {% endfor %}
+          {% elif not message.printed %}
+          <span class="badge">Locked</span>
+          {% else %}
+          <span></span>
+          {% endif%}
+          
+        </td>
+        <td>{{message.created}}</td>
+        <td>{{message.printed}}</td>
+        <td>
+          {% if message.printed%}
+          <button class="btn btn-sm btn-outline-primary">Print</button>
+          {% else %}
+          <button value="{{id}}" class="unlock-btn btn btn-sm btn-outline-primary">Unlock & print</button>
+          {% endif %}
+        </td>
+      </tr>
+        {% endfor %}
+      
+      {% endfor %}
+
+    </tbody>
+  </table>
+  <script>
+    const unlockBtns = document.querySelectorAll('.unlock-btn')
+    const unlockAllBtn = document.querySelector('#print-all-locked');
+
+    const unlockMessages = async (ids) => {
+      try {
+        const resp = await fetch('/api/confirm', {
+          method: "POST",
+          mode: "cors",
+          cache: "no-cache",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            messageIDs: ids
+          })
+        })
+        if(await resp.status === 200) {
+          console.log(await resp)
+          location.reload();
+        } else {
+          throw await resp.json()
+        }
+      } catch (error) {
+        e.target.innerText = original_text
+        e.target.disabled = false;
+        console.error(error)
+        alert('Operation failed. An error occured. See browser console for more info.')
+      }
+    } 
+
+    const handleConfirm = async (e) => {
+      const original_text = e.target.innerText;
+      e.target.innerText = 'Loading...'
+      e.target.disabled = true;
+      await unlockMessages([e.target.value])
+    }
+
+    const setUnprintedMessages = (btn, messageSelector) => {
+        const items = document.querySelectorAll(messageSelector)
+        if(items.length > 0) {
+          let locked = [];
+          items.forEach(item => {
+            if(item.dataset.printed === false || item.dataset.printed === "False") {
+              locked.push(item.dataset.messageId)
+            }
+          })
+          console.log(locked)
+          if( locked.length > 0) {
+            console.log(items, locked)
+            btn.innerText = `Unlock all (${locked.length})`
+            btn.disabled = false
+            return locked
+          } else {
+            console.log(items, locked)
+            btn.innerText = 'Unlock all'
+            btn.disabled = true
+            return null
+          }
+        } else {
+          console.log(items)
+          btn.innerText = 'Unlock all'
+          btn.disabled = true
+          return null
+        }
+    }
+
+    const unprintedIds = setUnprintedMessages(unlockAllBtn, '.message-row')
+
+    unlockAllBtn.addEventListener("click", e => unlockMessages(unprintedIds))
+
+    unlockBtns.forEach(btn => btn.addEventListener("click", e=> handleConfirm(e)))
+  </script>
+</main>
+ 
+{% endblock %}
+
+    
