@@ -3,7 +3,6 @@ import datetime
 import csv
 import requests
 import socket
-import simpleaudio as sa
 
 log_collection = []
 
@@ -17,7 +16,7 @@ def log(message: str, type='info'):
     }
 
     try: 
-      with open('hotline.log.csv', mode="a") as hotline_log:
+      with open('logs/hotline.log.csv', mode="a") as hotline_log:
         hotline_log = csv.writer(hotline_log, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         hotline_log.writerow([entry['timestamp'], entry['log_id'], entry['type'], entry['message']])
 
@@ -27,12 +26,6 @@ def log(message: str, type='info'):
     except Exception as e:
        print(e)
        raise e
-
-def play_audio():
-   filename = 'alert.wav'
-   wave_obj = sa.WaveObject.from_wave_file(filename)
-   play_obj = wave_obj.play()
-   play_obj.wait_done()  # Wait until sound has finished playing
 
 
 

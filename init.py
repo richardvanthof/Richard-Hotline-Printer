@@ -59,19 +59,6 @@ def main():
       return render_template('settings.html')
 
 
-  # API routes
-  @app.route("/api/play-audio", methods={"GET"})
-  async def play_audio_request():
-     try:
-      play_audio()
-      return 'audio played :)'
-     except Exception as e:
-      log(e, 'error')
-      return jsonify({
-        'success': False,
-        'message': e
-      })
-
   @app.route("/api/confirm", methods=['POST'])
   async def confirm_receipt_and_print():
       try:

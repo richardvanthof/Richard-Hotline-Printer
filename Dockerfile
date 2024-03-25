@@ -1,10 +1,11 @@
 # Use the official Python 3.8 slim image as the base image
-FROM python:3.9-slim
+FROM python:3.12-slim
+
 
 # Set the working directory within the container
 WORKDIR /app
+
 # Copy the necessary files and directories into the container
-RUN pip3 freeze > requirements.txt
 COPY ./requirements.txt /app
 
 # Upgrade pip and install Python dependencies
