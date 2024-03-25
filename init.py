@@ -50,7 +50,7 @@ def main():
       print(global_vars.messages)
       return render_template('index.html', queue=global_vars.messages)
 
-  @app.route("/logs")
+  @app.route("/logs") 
   def logs():
       return render_template('logs.html', logs=log_collection)
 
