@@ -4,9 +4,9 @@ from time import sleep
 led = RGBLED(red=9, green=10, blue=11)
 button = Button(2)
 
-print("Press button to start")
-button.wait_for_press()
-print("Button was pressed")
+# print("Press button to start")
+# button.wait_for_press()
+# print("Button was pressed")
 
 led.red = 1  # full red
 sleep(1)
