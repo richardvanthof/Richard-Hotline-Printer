@@ -19,7 +19,6 @@ isActive = True
 def load_dotenv_file(path='.env'):
     if not os.path.exists(path):
         return
-
     with open(path, 'r', encoding='utf-8') as dotenv_file:
         for raw_line in dotenv_file:
             line = raw_line.strip()
@@ -213,7 +212,9 @@ def sign_in(username:str, password:str, host:str):
     try:
         res = requests.post(f"{host}/login", json={"username": username, "password": password})
         if res.status_code == 200:
+            
             return res.json()
+            
     except Exception as e:
         print("Error during sign-in: ", e)
     
@@ -225,38 +226,30 @@ mode = "initializing"
 
 ## INITIALIZE PRINTER
 mode = "initializing"
+
 wait_for_system_ready()
 intitialize_db()
+
 mode = "ready"
+
 try:
-    res = sign_in(username, password, host)
+    auth = sign_in(username, password, host)
+    access_token = auth.get("accessToken")
+    refresh_token = auth.get("refreshToken")
+    token_expiry = auth.get("accessTokenExpiration")
+
+    with sqlite3.connect("appdata.db") as conn:
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO server_auth
+            (id, access_token, refresh_token, token_expiry)
+            VALUES (1, ?, ?, ?)
+            """,
+            (access_token, refresh_token, token_expiry),
+        )
 except Exception as e:
-    print("Error during sign-in: ", e)
-    res = None
-
-access_token = res["accessToken"] if res else None
-refresh_token = res["refreshToken"] if res else None
-token_expiry = res.get("accessTokenExpiration", None) if res else None
-# store the tokens in the database
-conn = sqlite3.connect('appdata.db')
-cursor = conn.cursor()
-cursor.execute(
-    """INSERT OR REPLACE INTO server_auth (id, access_token, refresh_token, token_expiry) VALUES (1, ?, ?, ?)""",
-    (access_token, refresh_token, token_expiry)
-)
-conn.commit()
-conn.close()
-
-
-conn = sqlite3.connect("appdata.db")
-cursor = conn.cursor()
-
-cursor.execute(
-    "SELECT access_token, refresh_token, token_expiry FROM server_auth ORDER BY id DESC LIMIT 1"
-)
-row = cursor.fetchone()
-
-
+    print(f"Error during sign-in: {e}")
+    auth = {}
 
 
 async def print_messages():
