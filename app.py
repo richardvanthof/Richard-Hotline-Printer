@@ -5,18 +5,16 @@ import requests
 import os
 import json
 import asyncio
+import socket
 from time import sleep, time
 import sqlite3
 import sseclient
 from io import BytesIO
 
 messages = []
-mode = None
+global mode
 authenticated = True
 isActive = True
-# messages.append()
-# messages.append('{"id":2,"name":"Jane Doe","email":"jane@doe.com","timestamp":"2023-10-01 12:40:00","message_body":[{"type":"image","src":"sample.jpg"},{"type":"text","content":"This is a sample message with an image and text."}]}')
-
 
 def load_dotenv_file(path='.env'):
     if not os.path.exists(path):
@@ -43,49 +41,88 @@ host = os.environ.get("HOST")
 username = os.environ.get("USERNAME")
 password = os.environ.get("PASSWORD")
 
-# init
-# check if the printer is connected, if internet connection is available, has paper and is authenticated to the server
-# printer ready: wait for messages
-# if messages area available, activate notifcation led and wait for button press
-#if button pressed, fetch all messsages, print messages and mark the messages as printed on the server, then go back to waiting for messages
-def printer_connected():
-    # check if the printer is connected
+def check_printer():
+    """
+    Returns True when printer responds.
+    """
     try:
-        p._raw(b'\x1D\x61\x01')  # test command to check if printer is connected
+        p._raw(b'\x1D\x61\x01')
         return True
     except Exception as e:
-        print("Printer not connected: ", e)
-        sleep(5)
-        printer_connected()
+        print(f"Printer check failed: {e}")
+        mode = "no_printer"
+        return False
+
 
 def check_internet_connection():
-    import socket
+    """
+    Returns True when internet is available.
+    """
     try:
-        # connect to the host -- tells us if the host is actually reachable
-        socket.create_connection(("www.google.com", 80))
+        socket.create_connection(("1.1.1.1", 53), timeout=3)
         return True
     except OSError:
-        pass
-    check_internet_connection()
+        print("No internet connection")
+        mode = "no_internet"
+        return False
+
 
 def check_paper_status():
-    # check if the printer has paper
+    """
+    ESC/POS paper detection.
+    Note: not every printer supports this.
+    """
     try:
-        p._raw(b'\x1D\x61\x01')  # test command to check if printer is connected
+        status = p._raw(b'\x10\x04\x04')  # DLE EOT paper status
+
+        # Depends on printer model.
+        # Many printers return a byte where bit 3 indicates paper end.
+        if status and status[0] & 0b00001000:
+            print("Printer is out of paper")
+            mode = "no_paper"
+            return False
+
         return True
+
     except Exception as e:
-        print("Printer not connected: ", e)
-        check_paper_status()
+        print(f"Paper status check failed: {e}")
+        return False
+
+def wait_for_system_ready():
+    mode = "checking_system_status"
+    
+
+    checks = {
+        "Printer": check_printer,
+        "Internet": check_internet_connection,
+        "Paper": check_paper_status,
+    }
+
+    while True:
+        failed = []
+
+        for name, check in checks.items():
+            if not check():
+                failed.append(name)
+
+        if not failed:
+            print("System ready")
+            mode = "ready"
+            return True
+
+        print("Waiting for:", ", ".join(failed))
+
+        # Optional LED feedback
+        led.color = (1, 0, 0)
+
+        sleep(10)
 
 def intitialize_db():
-    
+    mode = "initializing_DB"
     conn = sqlite3.connect('appdata.db')
     
     cursor = conn.cursor()
-    # cursor.execute(
-    #     """CREATE TABLE IF NOT EXISTS messages
-    #                 (id INTEGER PRIMARY KEY, name TEXT, email TEXT, timestamp TEXT, message_body TEXT)"""
-    # )
+
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS device_settings
                     (id INTEGER PRIMARY KEY, setting_key TEXT UNIQUE, setting_value TEXT)"""
@@ -129,8 +166,16 @@ def refresh_authentication_token(refreshToken:str):
             cursorj = connj.cursor()
             refreshed_tokens = res.json()
             cursorj.execute(
-                """UPDATE server_auth SET refresh_token = ?, token_expiry = ? WHERE id = 1""",
-                (refreshed_tokens.get("accessToken"), refreshed_tokens.get("accessTokenExpiration"))
+                """
+                UPDATE server_auth 
+                SET access_token = ?, refresh_token = ?, token_expiry = ?
+                WHERE id = 1
+                """,
+                (
+                    refreshed_tokens["accessToken"],
+                    refreshed_tokens["refreshToken"],
+                    refreshed_tokens["accessTokenExpiration"]
+                )
             )
             connj.commit()
             connj.close();
@@ -180,9 +225,7 @@ mode = "initializing"
 
 ## INITIALIZE PRINTER
 mode = "initializing"
-printer_connected()
-check_internet_connection()
-check_paper_status()
+wait_for_system_ready()
 intitialize_db()
 mode = "ready"
 try:
@@ -217,6 +260,7 @@ row = cursor.fetchone()
 
 
 async def print_messages():
+    mode = "printing"
     res = requests.get(
             f"{host}/message", 
             headers={"Authorization": f"Bearer {access_token}"},
@@ -272,7 +316,9 @@ async def detect_new_messages_available():
 
 def listen_for_new_messages():
     isIdle = True
+    
     while isActive:
+        mode = "ready"
         led.color = (0, 0, 0)  # Blue for new messages
         client = sseclient.SSEClient(
             f"{host}/messages-available",
@@ -293,13 +339,14 @@ def listen_for_new_messages():
 
                 if payload.get("hasMessages"):
                     led.color = (1, 0, 1)  # Blue for new messages
+                    mode = "waiting_for_print_confirmation"
                     if button.wait_for_press():
                         asyncio.run(print_messages())
                     break
                 else:
                     if button.is_pressed:
                         led.color = (1, 0, 0)
-                        
+                        mode = "ready"
                     
 
 listen_for_new_messages()
