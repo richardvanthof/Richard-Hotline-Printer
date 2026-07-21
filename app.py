@@ -300,14 +300,4 @@ def listen_for_new_messages():
                     break
                     
 
-
-
 listen_for_new_messages()
-
-# while(isActive):
-#     if await new_messages_available():
-#         print('new messages available. Press button to print.')
-#         button.wait_for_press()
-#         await print_messages()
-#     else:
-#         sleep(5)
