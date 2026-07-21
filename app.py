@@ -8,6 +8,7 @@ import asyncio
 from time import sleep, time
 import sqlite3
 import sseclient
+from io import BytesIO
 
 messages = []
 mode = None
@@ -100,13 +101,20 @@ def intitialize_db():
     conn.close()
 
 
-def load_print_image(image_path, max_width=400):
-    with Image.open(image_path) as image:
-        image = image.convert("RGB")
-        if image.width > max_width:
-            new_height = round(image.height * max_width / image.width)
-            image = image.resize((max_width, new_height), Image.LANCZOS)
-        return image
+def load_print_image(image_source, max_width=400):
+    if image_source.startswith("http://") or image_source.startswith("https://"):
+        response = requests.get(image_source, timeout=10)
+        response.raise_for_status()
+        image_data = BytesIO(response.content)
+        image = Image.open(image_data)
+    else:
+        image = Image.open(image_source)
+
+    image = image.convert("P")
+    if image.width > max_width:
+        new_height = round(image.height * max_width / image.width)
+        image = image.resize((max_width, new_height), Image.LANCZOS)
+    return image
 
 def refresh_authentication_token(refreshToken:str):
     try:
@@ -209,7 +217,13 @@ row = cursor.fetchone()
 
 
 async def print_messages():
-    res = requests.get(f"{host}/message", headers={"Authorization": f"Bearer {access_token}"})
+    res = requests.get(
+            f"{host}/message", 
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={
+                "status": "pending"
+            }
+        )
     messages = res.json()
 
     for message in messages['data']:
@@ -257,6 +271,7 @@ async def detect_new_messages_available():
 
 
 def listen_for_new_messages():
+    isIdle = True
     while isActive:
         client = sseclient.SSEClient(
             f"{host}/messages-available",
@@ -269,6 +284,10 @@ def listen_for_new_messages():
 
             print(event.event, event.data)
 
+            if button.is_pressed:
+                led.color = (1, 0, 0)  # Blue for no new messages
+                print("No new messages available.")
+
             if event.event == "message-count":
                 try:
                     payload = json.loads(event.data)
@@ -276,8 +295,11 @@ def listen_for_new_messages():
                     continue
 
                 if payload.get("hasMessages"):
-                    asyncio.run(print_messages())
+                    if button.wait_for_press():
+                        asyncio.run(print_messages())
                     break
+                    
+
 
 
 listen_for_new_messages()
