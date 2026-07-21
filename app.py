@@ -78,6 +78,7 @@ def check_paper_status():
         check_paper_status()
 
 def intitialize_db():
+    
     conn = sqlite3.connect('appdata.db')
     
     cursor = conn.cursor()
@@ -179,7 +180,6 @@ mode = "initializing"
 
 ## INITIALIZE PRINTER
 mode = "initializing"
-led.color = (.9, 0, .5)
 printer_connected()
 check_internet_connection()
 check_paper_status()
@@ -273,6 +273,7 @@ async def detect_new_messages_available():
 def listen_for_new_messages():
     isIdle = True
     while isActive:
+        led.color = (0, 0, 0)  # Blue for new messages
         client = sseclient.SSEClient(
             f"{host}/messages-available",
             headers={"Authorization": f"Bearer {get_authentication_token()}"},
@@ -284,10 +285,6 @@ def listen_for_new_messages():
 
             print(event.event, event.data)
 
-            if button.is_pressed:
-                led.color = (1, 0, 0)  # Blue for no new messages
-                print("No new messages available.")
-
             if event.event == "message-count":
                 try:
                     payload = json.loads(event.data)
@@ -295,9 +292,14 @@ def listen_for_new_messages():
                     continue
 
                 if payload.get("hasMessages"):
+                    led.color = (1, 0, 1)  # Blue for new messages
                     if button.wait_for_press():
                         asyncio.run(print_messages())
                     break
+                else:
+                    if button.is_pressed:
+                        led.color = (1, 0, 0)
+                        
                     
 
 listen_for_new_messages()
