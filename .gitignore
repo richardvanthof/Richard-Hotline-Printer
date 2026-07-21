@@ -2,3 +2,6 @@
 tmp
 .env
 appdata.db
+__pycache__/
+*.py[cod]
+*$py.class
